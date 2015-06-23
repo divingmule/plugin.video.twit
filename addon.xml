@@ -22,7 +22,7 @@
     <platform>all</platform>
     <language>en</language>
     <license>GNU GENERAL PUBLIC LICENSE. Version 2, June 1991</license>
-    <source>https://code.google.com/p/twit-xbmc/</source>
+    <source>https://github.com/divingmule/plugin.video.twit</source>
     <forum>http://forum.kodi.tv/showthread.php?tid=183336</forum>
     <website>http://twit.tv/</website>
   </extension>
