@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <addon id="plugin.video.twit"
              name="TWiT"
-             version="2.0.9"
+             version="2.1.0"
              provider-name="divingmule">
   <requires>
     <import addon="xbmc.python" version="2.1.0"/>
@@ -16,7 +16,7 @@
   <extension point="xbmc.addon.metadata">
     <summary>The TWiT.tv Netcast Network</summary>
     <description>
-      http://twit.tv/what-is-twit
+      https://twit.tv/about/what-is-twit-tv
       [CR]The TWiT.tv Netcast Network with Leo Laporte features the #1 ranked technology podcast This Week in Tech, along with over 20 other top-ranked online shows.
     </description>
     <platform>all</platform>
@@ -24,6 +24,6 @@
     <license>GNU GENERAL PUBLIC LICENSE. Version 2, June 1991</license>
     <source>https://github.com/divingmule/plugin.video.twit</source>
     <forum>http://forum.kodi.tv/showthread.php?tid=183336</forum>
-    <website>http://twit.tv/</website>
+    <website>https://twit.tv/</website>
   </extension>
 </addon>
