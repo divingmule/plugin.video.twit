@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.video.twit"
-             name="TWiT"
-             version="2.1.0"
+<addon id="plugin.video.twit_api"
+             name="TWiT API"
+             version="0.0.1"
              provider-name="divingmule">
   <requires>
     <import addon="xbmc.python" version="2.1.0"/>

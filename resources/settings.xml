@@ -1,6 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <settings>
   <category label="General">
+    <setting id="app-id" type="text" label="30039" default="" />
+    <setting id="app-key" type="text" label="30040" default="" />
     <setting id="playback" type="enum" lvalues="30015|30016|30017|30018" label="30014" default="1" />
     <setting id="view_mode" type="enum" label="30025" lvalues="30026|30027|30028|30029|30030|30031|30032|30033|30034" default="8" />
     <setting id="download" type="folder" source="files" label="30037"  option="writeable" default=""/>

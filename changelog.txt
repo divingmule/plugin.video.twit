@@ -1,3 +1,9 @@
+TWiT-API Version 0.0.1
+reworked to use the TWiT API
+API calls are limited to 5 per minute thus requring the user to supply their
+    own API keys
+added addon settings for API keys
+
 Version 2.1.0
 code cleanup
 release for Kodi repository
