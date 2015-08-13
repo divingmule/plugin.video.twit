@@ -1,3 +1,7 @@
+Version 0.0.2
+fix search
+add default API keys
+
 TWiT-API Version 0.0.1
 reworked to use the TWiT API
 API calls are limited to 5 per minute thus requring the user to supply their

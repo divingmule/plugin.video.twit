@@ -1,4 +1,4 @@
-﻿import urllib
+import urllib
 import urllib2
 import os
 import re
@@ -56,6 +56,11 @@ def make_request(url):
             addon_log('Reason: %s' %e.reason)
         if hasattr(e, 'code'):
             addon_log('We failed with error code - %s.' %e.code)
+            if e.code == 500:
+                dialog = xbmcgui.Dialog()
+                dialog.notification('API Call Limit Reached',
+                                    'Wait a minute and try again',
+                                    xbmcgui.NOTIFICATION_WARNING, 5000)
 
 
 def shows_cache_active():
@@ -68,8 +73,8 @@ def shows_cache_retired():
     addon_log('Getting retired show_data')
     shows_data = json.loads(make_request(base_url + '/shows?shows_active=0'))
     return shows_data
-    
-    
+
+
 def episodes_cache_function(episodes_url):
     episodes_cache = {}
     try:
@@ -90,8 +95,8 @@ def episodes_cache_function(episodes_url):
                                     'data': episodes_data}
     cache.set('episodes_cache', repr(episodes_cache))
     return episodes_data
-    
-    
+
+
 def episodes_cache_check(expiration_time):
     ''' episodes_cache helper function, returns True if cache is not old'''
     try:
@@ -104,8 +109,8 @@ def episodes_cache_check(expiration_time):
         addon_log('Episode cache is old')
     else:
         return True
-        
-        
+
+
 def episodes_cache_cleanup():
     '''cleanup old episodes cache once every 24 hours'''
     last_cleaned = None
@@ -136,9 +141,8 @@ def episodes_cache_cleanup():
     cache.set('episodes_cache', repr(episodes_cache))
     cache.set('cleanup_time', datetime.strftime(datetime.now() +
         timedelta(hours=24), '%Y-%m-%d-%H-%M'))
-    
-    
-    
+
+
 def display_shows(filter):
     ''' parse shows cache and add directories'''
     # show_data is cached for the allotted 6 hours by the cacheFunction
@@ -151,6 +155,8 @@ def display_shows(filter):
     except:
         album_art = {}
     for i in shows_data['shows']:
+        if i['label'] == 'All TWiT.tv Shows':
+            continue
         fanart = i['coverArt']['derivatives']['twit_album_art_1400x1400']
         album_art[i['label']] = fanart
         info = {'plotoutline': i['tagLine'],
@@ -181,10 +187,18 @@ def get_episodes(episodes_url, iconimage):
         # int error, we should have a fully formatted URL
         pass
     episodes_data = episodes_cache_function(episodes_url)
+    if not episodes_data:
+        return
     # caching episodes_data to resolve the stream URL after selection
     cache.set('episodes', repr(episodes_data))
     artwork = eval(cache.get('album_art'))
     for i in episodes_data['episodes']:
+        show_name = i['_embedded']['shows'][0]['label']
+        fanart = artwork[show_name]
+        title = i['label'].encode('utf-8')
+        if episodes_url == 'all_episodes' or 'episodes?range' in episodes_url:
+            if not show_name.lower() in title.lower():
+                title = '%s: %s' %(show_name, title)
         info = {'plotoutline': i['teaser'], 'episode': i['episodeNumber']}
         info['plot'] = BeautifulSoup(
             i['showNotes'], 'html.parser').get_text(separator=' ', strip=True)
@@ -194,9 +208,8 @@ def get_episodes(episodes_url, iconimage):
                 stream_data = i[x]
                 break
         if stream_data:
-            info['duration'] = (int(stream_data['hours']) * 60  +
-                                   int(stream_data['minutes']))
-        fanart = artwork[i['_embedded']['shows'][0]['label']]
+            info['duration'] = ((int(stream_data['hours']) * 60  +
+                                   int(stream_data['minutes'])) * 60)
         try:
             d_object = datetime.strptime(i['created'],
                                          '%Y-%m-%dT%H:%M:%Sz')
@@ -204,13 +217,12 @@ def get_episodes(episodes_url, iconimage):
             d_object = datetime(*(time.strptime(i['created'],
                                                 '%Y-%m-%dT%H:%M:%Sz')[0:6]))
         info['aired'] = datetime.strftime(d_object, '%Y/%m/%d')
-        
-        add_dir(i['label'].encode('utf-8'), i['id'], i['heroImage']['url'],
+
+        add_dir(title, i['id'], i['heroImage']['url'],
                 'resolve_url', info, fanart)
     if episodes_data['_links'].has_key('next'):
         add_dir(language(30019),episodes_data['_links']['next']['href'],
                 iconimage, 'episodes', {}, addon_fanart)
-
 
 
 def get_all_episodes():
@@ -219,23 +231,46 @@ def get_all_episodes():
 
 
 def search_twit():
-    # this will need to be finished when the API is fixed
     keyboard = xbmc.Keyboard('', "Search")
     keyboard.doModal()
     if (keyboard.isConfirmed() == False):
         return
-    search_string = keyboard.getText()
+    search_string = keyboard.getText().replace(' ', '%20')
     if len(search_string) == 0:
         return
-    search_url = ('%s/search/%s?range=12&page=1' %
-        (base_url, search_string))
+    get_search_results('%s/search/%s?range=12' %(base_url, search_string))
 
 
+def get_search_results(search_url, search_string=None):
+    data = json.loads(make_request(search_url))
+    for i in data['search']:
+        if i['type'] == 'episode':
+            add_dir(i['label'], i['id'], addon_icon, 'episode',
+                    info={'plot': i['body']})
+        elif i['type'] == 'show':
+            add_dir(i['label'], i['id'], addon_icon, 'episodes',
+                    info={'plot': i['body']})
+        else:
+            addon_log('Unknown Type: %s' %i['type'])
+    if data['_links'].has_key('next'):
+        if search_string is None:
+            search_string = search_url.split('/')[-1].split('?')[0]
+        next = data['_links']['next']['href']
+        addon_log('Next URL: %s' %next)
+        index = next.find('?')
+        next_url = '%s/%s%s' %(next[:index], search_string, next[index:])
+        add_dir(language(30019), next_url, addon_icon, 'search_results')
 
-def resolve_url(episode_id, download=False):
-    ''' resolve the stream url from the episodes cache'''
-    episodes = eval(cache.get('episodes'))['episodes']
-    episode = [i for i in episodes if i['id'] == int(episode_id)][0]
+
+def resolve_url(episode_id, download=False, cached=True):
+    if cached:
+        # resolve the stream url from the episodes cache
+        episodes = eval(cache.get('episodes'))['episodes']
+        episode = [i for i in episodes if i['id'] == int(episode_id)][0]
+    else:
+        data = json.loads(make_request('%s/episodes/%s' %(base_url, episode_id)))
+        episode = data['episodes']
+
     playback_options = {'0': 'HD Video','1': 'SD Video Large',
                         '2': 'SD Video Small', '3': 'Audio'}
     stream_urls = []
@@ -438,7 +473,7 @@ elif mode == 'episodes':
     xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 elif mode == 'episode':
-    get_episode(params['url'])
+    set_resolved_url(resolve_url(params['url'], cached=False))
     xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 elif mode == 'all_episodes':
@@ -452,7 +487,12 @@ elif mode == 'search':
     search_twit()
     xbmcplugin.setContent(int(sys.argv[1]), 'episodes')
     set_view_mode()
-    episodes_cache_cleanup()
+    xbmcplugin.endOfDirectory(int(sys.argv[1]))
+
+elif mode == 'search_results':
+    get_search_results(params['url'])
+    xbmcplugin.setContent(int(sys.argv[1]), 'episodes')
+    set_view_mode()
     xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 elif mode == 'resolve_url':
