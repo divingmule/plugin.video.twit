@@ -293,7 +293,7 @@ def resolve_url(episode_id, download=False, cached=True):
         else:
             for i in stream_urls:
                 if playback_options[addon.getSetting('playback')] == i[0]:
-                    resolved_url = i[1]
+                    resolved_url = i[0]
                     break
     # If the prfered stream is not avaliable or for downloads,
     # we use select dialog with the avaliable streams.
