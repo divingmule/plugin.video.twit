@@ -158,12 +158,9 @@ def get_featured_episodes():
                          convertEntities=BeautifulSoup.HTML_ENTITIES)
     catorgies = soup('div', attrs={'class': 'list hero episodes'})
     for i in catorgies:
-        cat_name = i.findPrevious('h2').a.string
+        cat_name = i.findPrevious('h2').a.string.strip()
         episodes = i('div', attrs={'class': 'episode item'})
-        count = 0
         for x in episodes:
-            count = count + 1
-            addon_log(str(count))
             try:
                 episode_name = x.span.getText(' ').strip()
                 title = '[%s] %s' %(cat_name, episode_name)

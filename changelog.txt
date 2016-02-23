@@ -1,3 +1,6 @@
+Version 2.1.2
+fix script errors on systems running python 2.6(android)
+
 Version 2.1.1
 fix website changes
 
