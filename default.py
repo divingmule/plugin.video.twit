@@ -6,7 +6,7 @@ from urlparse import urlparse, parse_qs
 
 import StorageServer
 import SimpleDownloader as downloader
-from bs4 import BeautifulSoup
+from BeautifulSoup import BeautifulSoup
 from resources import artwork
 
 import xbmcplugin
@@ -53,14 +53,15 @@ def make_request(url):
 def shows_cache():
     ''' this function will cache a dict of all shows '''
     def parse_shows_to_list(shows_url):
-        soup = BeautifulSoup(make_request(shows_url), 'html.parser')
-        shows_tag = (soup.find('div', class_='list media shows')
-                        ('div', class_="item media-object"))
+        soup = BeautifulSoup(make_request(shows_url),
+                             convertEntities=BeautifulSoup.HTML_ENTITIES)
+        shows_tag = (soup.find('div', attrs={'class': 'list media shows'})
+                        ('div', attrs={'class': "item media-object"}))
         show_list = [{'url': i.a['href'],
                       'thumb': i.img['src'],
-                      'title': x.a.get_text(),
-                      'desc': x.div.get_text()} for
-            i in shows_tag for x in i('div', class_='media-bd')]
+                      'title': x.a.getText(),
+                      'desc': x.div.getText()} for
+            i in shows_tag for x in i('div', attrs={'class': 'media-bd'})]
         return show_list
     shows = {
         'active': parse_shows_to_list(base_url + '/shows?shows_active=1'),
@@ -99,20 +100,25 @@ def display_main():
 
 def get_episodes(url, iconimage):
     ''' display episodes of a specific show '''
-    soup = BeautifulSoup(make_request(base_url + url), 'html.parser')
-    episodes = (soup.find('div', class_='list hero episodes')
-                    ('div', class_='episode item'))
+    soup = BeautifulSoup(make_request(base_url + url),
+                         convertEntities=BeautifulSoup.HTML_ENTITIES)
+    episodes = (soup.find('div', attrs={'class': 'list hero episodes'})
+                    ('div', attrs={'class': 'episode item'}))
     for i in episodes:
-        title = i.span.get_text(' ', strip=True)
+        try:
+            title = i.span.getText(' ').strip()
+        except:
+            addon_log(format_exc())
+            continue
         add_dir(title, base_url + i.a['href'], i.img['src'], 'resolve_url',
                 {'plot': i.a['title']}, iconimage)
     # find more pages
-    all_episodes_tag = soup.find('div', class_='all-episodes')
+    all_episodes_tag = soup.find('div', attrs={'class': 'all-episodes'})
     if all_episodes_tag:
         add_dir(all_episodes_tag.a.string, all_episodes_tag.a['href'],
                 iconimage, 'episodes', {}, iconimage)
     else:
-        pagination_tag = soup.find('div', class_='pagination')
+        pagination_tag = soup.find('div', attrs={'class': 'pagination'})
         if pagination_tag:
             page_url = None
             next_page_tag = pagination_tag.find('svg',
@@ -120,8 +126,9 @@ def get_episodes(url, iconimage):
             if next_page_tag > 0:
                 title = ('%s - Next' %
                          pagination_tag('span',
-                                         class_='page-number')[0].string)
-                page_url = pagination_tag('a', class_='next')[0]['href']
+                            attrs={'class': 'page-number'})[0].string)
+                page_url = pagination_tag('a', attrs={'class': 'next'}
+                                          )[0]['href']
             elif next_page_tag:
                 title = ('%s %s' %
                          (pagination_tag.span.string,
@@ -136,9 +143,10 @@ def get_episode(url):
     ''' this function is used for search results,
         some arent linked to a episode page'''
     if 'transcript' in url:
-        soup = BeautifulSoup(make_request(base_url + url), 'html.parser')
-        episode_url = base_url + soup.find('div', class_='episode item'
-                                           ).a['href']
+        soup = BeautifulSoup(make_request(base_url + url),
+                             convertEntities=BeautifulSoup.HTML_ENTITIES)
+        episode_url = base_url + soup.find(
+            'div', attrs={'class': 'episode item'}).a['href']
     else:
         episode_url = base_url + url
     set_resolved_url(resolve_url(episode_url))
@@ -146,16 +154,24 @@ def get_episode(url):
 
 def get_featured_episodes():
     ''' display episodes from twit.tv homepage'''
-    soup = BeautifulSoup(make_request(base_url), 'html.parser')
-    catorgies = soup('div', class_="list hero episodes")
+    soup = BeautifulSoup(make_request(base_url),
+                         convertEntities=BeautifulSoup.HTML_ENTITIES)
+    catorgies = soup('div', attrs={'class': 'list hero episodes'})
     for i in catorgies:
-        cat_name = i.find_previous('h2').string
-        episodes = i('div', class_='episode item')
+        cat_name = i.findPrevious('h2').a.string
+        episodes = i('div', attrs={'class': 'episode item'})
+        count = 0
         for x in episodes:
-            episode_name = x.span.get_text(' ', strip=True)
-            title = '[%s] %s' %(cat_name, episode_name)
+            count = count + 1
+            addon_log(str(count))
             try:
-                fanart = artwork.arts[episode_name.rsplit(' ', 1)[0].strip()]
+                episode_name = x.span.getText(' ').strip()
+                title = '[%s] %s' %(cat_name, episode_name)
+            except:
+                addon_log(format_exc())
+                continue
+            try:
+                fanart = artwork.arts[episode_name.rsplit(' Episode', 1)[0].strip()]
             except:
                 addon_log(format_exc())
                 fanart = addon_fanart
@@ -172,11 +188,12 @@ def search_twit():
     if len(search_string) == 0:
         return
     search_url = '%s/search/%s' %(base_url, urllib2.quote(search_string))
-    soup = BeautifulSoup(make_request(search_url), 'html.parser')
-    items = soup.find_all('h3', class_='title')
+    soup = BeautifulSoup(make_request(search_url),
+                         convertEntities=BeautifulSoup.HTML_ENTITIES)
+    items = soup.findAll('h3', attrs={'class': 'title'})
     for i in items:
         title = i.a.string.rstrip(' (Transcript)')
-        info = {'plot': i.find_next('div').string}
+        info = {'plot': i.findNext('div').string}
         add_dir(title, i.a['href'], addon_icon, 'episode', info)
 
 
@@ -188,9 +205,10 @@ def resolve_url(url, download=False):
         '2': 'SD Video Small',
         '3': 'Audio'
         }
-    soup = BeautifulSoup(make_request(url), 'html.parser')
+    soup = BeautifulSoup(make_request(url),
+                         convertEntities=BeautifulSoup.HTML_ENTITIES)
     media_urls = {}
-    stream_tag = soup.find('div', class_='choices subscribe-form')
+    stream_tag = soup.find('div', attrs={'class': 'choices subscribe-form'})
     if stream_tag:
         streams = stream_tag('a')
         for i in streams:
