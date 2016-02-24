@@ -1,5 +1,8 @@
 Version 2.1.2
+testing/beta release
 fix script errors on systems running python 2.6(android)
+fix for shows "Radio Leo" and "All TWiT.tv Shows"
+we now use the RSS feed for the initial episode directory of a show
 
 Version 2.1.1
 fix website changes

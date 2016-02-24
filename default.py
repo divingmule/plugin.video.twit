@@ -1,9 +1,11 @@
-﻿import urllib
+import urllib
 import urllib2
 import os
+import time
 from traceback import format_exc
 from urlparse import urlparse, parse_qs
 
+import feedparser
 import StorageServer
 import SimpleDownloader as downloader
 from BeautifulSoup import BeautifulSoup
@@ -31,7 +33,7 @@ def addon_log(string):
     except:
         log_message = 'addonException: addon_log: %s' %format_exc()
     xbmc.log("[%s-%s]: %s" %(addon_id, addon_version, log_message),
-                             level=xbmc.LOGDEBUG)
+                             level=xbmc.LOGNOTICE)
 
 
 def make_request(url):
@@ -74,7 +76,8 @@ def display_shows(filter):
     ''' parse shows cache and add directories'''
     # update the show cache at the set cacheFunction interval
     shows = cache.cacheFunction(shows_cache)
-    for i in shows[filter]:
+    shows_sorted = sorted(shows[filter], key=lambda k: k['title'])
+    for i in shows_sorted:
         try:
             thumb = artwork.arts[i['title']]
             fanart = thumb
@@ -82,24 +85,63 @@ def display_shows(filter):
             addon_log('NO Artwork %s' %i['title'])
             thumb = i['thumb']
             fanart = None
-        add_dir(i['title'], i['url'], thumb, 'episodes',
-                {'plot': i['desc']}, fanart)
+        title = i['title']
+        mode = 'rss_feed'
+        if filter == 'retired':
+            mode = 'episodes'
+        add_dir(title, i['url'], thumb, mode, {'plot': i['desc']}, fanart)
 
 
 def display_main():
     ''' display the main directory '''
     live_icon = os.path.join(addon_path, 'resources', 'live.png')
     search_icon = os.path.join(addon_path, 'resources', 'search.png')
-    add_dir(language(30000), 'featured_episodes', addon_icon,
-            'featured_episodes')
+    # add_dir(language(30000), 'featured_episodes', addon_icon,
+            # 'featured_episodes')
     add_dir(language(30001), 'twit_live', live_icon, 'twit_live')
-    add_dir(language(30008), 'search', search_icon, 'search')
     display_shows('active')
+    add_dir(language(30008), 'search', search_icon, 'search')
     add_dir(language(30036), 'retired_shows', addon_icon, 'retired_shows')
 
 
+def get_rss_feed(url, show_name, iconimage):
+    soup = BeautifulSoup(make_request(base_url + url),
+                         convertEntities=BeautifulSoup.HTML_ENTITIES)
+    media_urls = {}
+    feeds_tag = soup('div', attrs={'class': 'choice'})
+    for i in feeds_tag:
+        media_urls[i.label.string] = [x['value'] for x in i('option') if
+                                      x.string == 'RSS'][0]
+    feed_url = resolve_playback_type(media_urls)
+    feed = feedparser.parse(feed_url)
+    get_art = False
+    if show_name in ['Radio Leo', 'All TWiT.tv Shows']:
+        get_art = True
+        art_keys = artwork.arts.keys()
+    for i in feed['entries']:
+        title = i['title']
+        try:
+            if get_art:
+                art = [artwork.arts[x] for x in art_keys if x in title][0]
+            else:
+                art = iconimage
+        except:
+            addon_log(format_exc())
+            art = iconimage
+        info = {}
+        info['duration'] = duration_to_seconds(i['itunes_duration'])
+        info['aired'] = time.strftime('%Y/%m/%d', i['published_parsed'])
+        info['plot'] = i['content'][0]['value']
+        add_dir(title, i['id'], art, 'resolved_url', info, iconimage)
+    if not get_art:
+        all_episodes_tag = soup.find('div', attrs={'class': 'all-episodes'})
+        if all_episodes_tag:
+            add_dir(all_episodes_tag.a.string, all_episodes_tag.a['href'],
+                    iconimage, 'episodes', {}, iconimage)
+
+
 def get_episodes(url, iconimage):
-    ''' display episodes of a specific show '''
+    ''' display episodes of a specific show from the website'''
     soup = BeautifulSoup(make_request(base_url + url),
                          convertEntities=BeautifulSoup.HTML_ENTITIES)
     episodes = (soup.find('div', attrs={'class': 'list hero episodes'})
@@ -156,8 +198,8 @@ def get_featured_episodes():
     ''' display episodes from twit.tv homepage'''
     soup = BeautifulSoup(make_request(base_url),
                          convertEntities=BeautifulSoup.HTML_ENTITIES)
-    catorgies = soup('div', attrs={'class': 'list hero episodes'})
-    for i in catorgies:
+    categories = soup('div', attrs={'class': 'list hero episodes'})
+    for i in categories:
         cat_name = i.findPrevious('h2').a.string.strip()
         episodes = i('div', attrs={'class': 'episode item'})
         for x in episodes:
@@ -194,14 +236,40 @@ def search_twit():
         add_dir(title, i.a['href'], addon_icon, 'episode', info)
 
 
-def resolve_url(url, download=False):
-    ''' resolve the stream url from the episode page'''
+def duration_to_seconds(duration_string):
+    d = duration_string.split(':')
+    seconds = (((int(d[0]) * 60) + int(d[1])) * 60) + int(d[2])
+    return seconds
+
+
+def resolve_playback_type(media_urls):
     playback_options = {
         '0': 'HD Video',
         '1': 'SD Video Large',
         '2': 'SD Video Small',
         '3': 'Audio'
         }
+    if (params.has_key('content_type') and
+        params['content_type'] == 'audio'):
+        playback_setting = '3'
+        playback_type = 'Audio'
+    else:
+        playback_setting = addon.getSetting('playback')
+        playback_type = playback_options[playback_setting]
+    resolved_url = None
+    if media_urls.has_key(playback_type):
+        resolved_url = media_urls[playback_type]
+    else:
+        dialog = xbmcgui.Dialog()
+        ret = dialog.select(language(30002), media_urls.keys())
+        if ret >= 0:
+            resolved_url = media_urls.values()[ret]
+    return resolved_url
+
+
+
+def resolve_url(url, download=False):
+    ''' resolve the stream url from the episode page'''
     soup = BeautifulSoup(make_request(url),
                          convertEntities=BeautifulSoup.HTML_ENTITIES)
     media_urls = {}
@@ -213,21 +281,7 @@ def resolve_url(url, download=False):
     resolved_url = None
     if media_urls:
         if not download:
-            if (params.has_key('content_type') and
-                params['content_type'] == 'audio'):
-                playback_setting = '3'
-                playback_type = 'Audio'
-            else:
-                playback_setting = addon.getSetting('playback')
-                playback_type = playback_options[playback_setting]
-
-            if media_urls.has_key(playback_type):
-                resolved_url = media_urls[playback_type]
-            else:
-                dialog = xbmcgui.Dialog()
-                ret = dialog.select(language(30002), media_urls.keys())
-                if ret >= 0:
-                    resolved_url = media_urls.values()[ret]
+            resolved_url = resolve_playback_type(media_urls)
         else:
             dialog = xbmcgui.Dialog()
             ret = dialog.select(language(30002), media_urls.keys())
@@ -306,7 +360,7 @@ def add_dir(name, url, iconimage, mode, info={}, fanart=None):
                         'mode=ircchat&name=ircchat&url=live_chat)')]
         listitem.addContextMenuItems(contextMenu)
     isfolder = True
-    if mode == 'resolve_url' or mode == 'twit_live' or mode == 'episode':
+    if mode in ['resolve_url', 'resolved_url', 'twit_live', 'episode']:
         isfolder = False
         listitem.setProperty('IsPlayable', 'true')
     if mode == 'resolve_url' or mode == 'episode':
@@ -415,6 +469,15 @@ elif mode == 'search':
     xbmcplugin.setContent(int(sys.argv[1]), 'episodes')
     set_view_mode()
     xbmcplugin.endOfDirectory(int(sys.argv[1]))
+
+elif mode == 'rss_feed':
+    get_rss_feed(params['url'], params['name'], params['iconimage'])
+    xbmcplugin.setContent(int(sys.argv[1]), 'episodes')
+    set_view_mode()
+    xbmcplugin.endOfDirectory(int(sys.argv[1]))
+
+elif mode == 'resolved_url':
+    set_resolved_url(params['url'])
 
 elif mode == 'resolve_url':
     set_resolved_url(resolve_url(params['url']))
