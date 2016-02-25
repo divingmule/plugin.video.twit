@@ -119,7 +119,7 @@ def get_rss_feed(url, show_name, iconimage):
         get_art = True
         art_keys = artwork.arts.keys()
     for i in feed['entries']:
-        title = i['title']
+        title = i['title'].encode('utf-8')
         try:
             if get_art:
                 art = [artwork.arts[x] for x in art_keys if x in title][0]
@@ -131,7 +131,7 @@ def get_rss_feed(url, show_name, iconimage):
         info = {}
         info['duration'] = duration_to_seconds(i['itunes_duration'])
         info['aired'] = time.strftime('%Y/%m/%d', i['published_parsed'])
-        info['plot'] = i['content'][0]['value']
+        info['plot'] = i['content'][0]['value'].encode('utf-8')
         add_dir(title, i['id'], art, 'resolved_url', info, iconimage)
     if not get_art:
         all_episodes_tag = soup.find('div', attrs={'class': 'all-episodes'})
