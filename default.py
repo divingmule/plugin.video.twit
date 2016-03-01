@@ -33,7 +33,7 @@ def addon_log(string):
     except:
         log_message = 'addonException: addon_log: %s' %format_exc()
     xbmc.log("[%s-%s]: %s" %(addon_id, addon_version, log_message),
-                             level=xbmc.LOGDEBUG)
+                             level=xbmc.LOGNOTICE)
 
 
 def make_request(url):
@@ -291,7 +291,10 @@ def resolve_url(url, download=False):
 
 def download_file(url, title):
     ''' thanks/credit to TheCollective for SimpleDownloader module'''
-    stream_url =  resolve_url(url, True)
+    if not url.endswith('.mp4') and not url.endswith('.mp3'):
+        stream_url =  resolve_url(url, True)
+    else:
+        stream_url = url
     path = addon.getSetting('download')
     if path == "":
         xbmc.executebuiltin("XBMC.Notification(%s,%s,10000,%s)"
@@ -362,7 +365,7 @@ def add_dir(name, url, iconimage, mode, info={}, fanart=None):
     if mode in ['resolve_url', 'resolved_url', 'twit_live', 'episode']:
         isfolder = False
         listitem.setProperty('IsPlayable', 'true')
-    if mode == 'resolve_url' or mode == 'episode':
+    if mode in ['resolve_url', 'episode', 'resolved_url']:
         contextMenu = [(language(30035),
                        'RunPlugin(plugin://plugin.video.twit/?'
                        'mode=download&name=%s&url=%s)' %(name, url))]
