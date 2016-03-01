@@ -33,7 +33,7 @@ def addon_log(string):
     except:
         log_message = 'addonException: addon_log: %s' %format_exc()
     xbmc.log("[%s-%s]: %s" %(addon_id, addon_version, log_message),
-                             level=xbmc.LOGNOTICE)
+                             level=xbmc.LOGDEBUG)
 
 
 def make_request(url):
