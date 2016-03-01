@@ -33,7 +33,7 @@ def addon_log(string):
     except:
         log_message = 'addonException: addon_log: %s' %format_exc()
     xbmc.log("[%s-%s]: %s" %(addon_id, addon_version, log_message),
-                             level=xbmc.LOGNOTICE)
+                             level=xbmc.LOGDEBUG)
 
 
 def make_request(url):
@@ -73,7 +73,7 @@ def shows_cache():
 
 
 def display_shows(filter):
-    ''' parse shows cache and add directories'''
+    ''' parse shows cache and add directories '''
     # update the show cache at the set cacheFunction interval
     shows = cache.cacheFunction(shows_cache)
     shows_sorted = sorted(shows[filter], key=lambda k: k['title'])
@@ -96,28 +96,27 @@ def display_main():
     ''' display the main directory '''
     live_icon = os.path.join(addon_path, 'resources', 'live.png')
     search_icon = os.path.join(addon_path, 'resources', 'search.png')
-    # add_dir(language(30000), 'featured_episodes', addon_icon,
-            # 'featured_episodes')
     add_dir(language(30001), 'twit_live', live_icon, 'twit_live')
     display_shows('active')
     add_dir(language(30008), 'search', search_icon, 'search')
     add_dir(language(30036), 'retired_shows', addon_icon, 'retired_shows')
+    add_dir(language(30000), 'featured_episodes', addon_icon,
+            'featured_episodes')
 
 
 def get_rss_feed(url, show_name, iconimage):
+    ''' parse the rss feed fot the initial episode directory of a show '''
     soup = BeautifulSoup(make_request(base_url + url),
                          convertEntities=BeautifulSoup.HTML_ENTITIES)
-    media_urls = {}
-    feeds_tag = soup('div', attrs={'class': 'choice'})
-    for i in feeds_tag:
-        media_urls[i.label.string] = [x['value'] for x in i('option') if
-                                      x.string == 'RSS'][0]
-    feed_url = resolve_playback_type(media_urls)
-    feed = feedparser.parse(feed_url)
     get_art = False
     if show_name in ['Radio Leo', 'All TWiT.tv Shows']:
         get_art = True
         art_keys = artwork.arts.keys()
+    media_urls = {}
+    for i in soup('div', attrs={'class': 'choice'}):
+        media_urls[i.label.string] = [x['value'] for x in i('option') if
+                                      x.string == 'RSS'][0]
+    feed = feedparser.parse(resolve_playback_type(media_urls))
     for i in feed['entries']:
         title = i['title'].encode('utf-8')
         try:
