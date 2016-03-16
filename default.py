@@ -326,11 +326,11 @@ def twit_live():
         'http://bglive-a.bitgravity.com/twit/live/low?noprefix',
         ('http://iphone-streaming.ustream.tv/ustreamVideo/1524/'
          'streams/live/playlist.m3u8'),
-        ('http://hls.cdn.flosoft.biz/flosoft/smil:twitStreamAll.smil/'
+        ('http://hls.twit.tv/flosoft/smil:twitStreamAll.smil/'
          'playlist.m3u8'),
-        'http://hls.cdn.flosoft.biz/flosoft/mp4:twitStream_720/playlist.m3u8',
-        'http://hls.cdn.flosoft.biz/flosoft/mp4:twitStream_540/playlist.m3u8',
-        'http://hls.cdn.flosoft.biz/flosoft/mp4:twitStream_360/playlist.m3u8',
+        'http://hls.twit.tv/flosoft/mp4:twitStream_720/playlist.m3u8',
+        'http://hls.twit.tv/flosoft/mp4:twitStream_540/playlist.m3u8',
+        'http://hls.twit.tv/flosoft/mp4:twitStream_360/playlist.m3u8',
         'http://twit.am/listen'
         ]
     if content_type == 'audio':
