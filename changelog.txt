@@ -1,3 +1,7 @@
+Version 2.1.5
+release for Kodi repository
+upgrade language file to strings.po
+
 Version 2.1.4
 testing/beta release
 fix/workaround for Python V2 SSL bug
