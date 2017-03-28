@@ -1,3 +1,8 @@
+Version 0.0.3
+fix broken images
+updated live feeds
+ *previously saved settings may need to be adjusted
+
 Version 0.0.2
 fix search
 add default API keys

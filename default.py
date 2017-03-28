@@ -157,7 +157,8 @@ def display_shows(filter):
     for i in shows_data['shows']:
         if i['label'] == 'All TWiT.tv Shows':
             continue
-        fanart = i['coverArt']['derivatives']['twit_album_art_1400x1400']
+        fanart = ('https:%s' %i['coverArt']['derivatives']
+                ['twit_album_art_1400x1400'])
         album_art[i['label']] = fanart
         info = {'plotoutline': i['tagLine'],
                 'plot': BeautifulSoup(i['description'], 'html.parser'
@@ -217,9 +218,8 @@ def get_episodes(episodes_url, iconimage):
             d_object = datetime(*(time.strptime(i['created'],
                                                 '%Y-%m-%dT%H:%M:%Sz')[0:6]))
         info['aired'] = datetime.strftime(d_object, '%Y/%m/%d')
-
-        add_dir(title, i['id'], i['heroImage']['url'],
-                'resolve_url', info, fanart)
+        episode_image = 'https:%s' %i['heroImage']['url']
+        add_dir(title, i['id'], episode_image, 'resolve_url', info, fanart)
     if episodes_data['_links'].has_key('next'):
         add_dir(language(30019),episodes_data['_links']['next']['href'],
                 iconimage, 'episodes', {}, addon_fanart)
@@ -293,7 +293,7 @@ def resolve_url(episode_id, download=False, cached=True):
         else:
             for i in stream_urls:
                 if playback_options[addon.getSetting('playback')] == i[0]:
-                    resolved_url = i[0]
+                    resolved_url = i[1]
                     break
     # If the prfered stream is not avaliable or for downloads,
     # we use select dialog with the avaliable streams.
@@ -333,19 +333,13 @@ def download_file(url, title):
 
 def twit_live():
     live_urls = [
-        ('http://twit.live-s.cdn.bitgravity.com/cdn-live-s1/_definst_/'
-         'twit/live/high/playlist.m3u8'),
-        ('http://twit.live-s.cdn.bitgravity.com/cdn-live-s1/_definst_/'
-         'twit/live/low/playlist.m3u8'),
-        'http://bglive-a.bitgravity.com/twit/live/high?noprefix',
-        'http://bglive-a.bitgravity.com/twit/live/low?noprefix',
-        ('http://iphone-streaming.ustream.tv/ustreamVideo/1524/'
-         'streams/live/playlist.m3u8'),
-        ('http://hls.cdn.flosoft.biz/flosoft/smil:twitStreamAll.smil/'
+        ('http://iphone-streaming.ustream.tv/uhls/1524/streams/live/'
+        'iphone/playlist.m3u8'),
+        ('http://hls.twit.tv/flosoft/smil:twitStreamAll.smil/'
          'playlist.m3u8'),
-        'http://hls.cdn.flosoft.biz/flosoft/mp4:twitStream_720/playlist.m3u8',
-        'http://hls.cdn.flosoft.biz/flosoft/mp4:twitStream_540/playlist.m3u8',
-        'http://hls.cdn.flosoft.biz/flosoft/mp4:twitStream_360/playlist.m3u8',
+        'http://hls.twit.tv/flosoft/mp4:twitStream_720/playlist.m3u8',
+        'http://hls.twit.tv/flosoft/mp4:twitStream_540/playlist.m3u8',
+        'http://hls.twit.tv/flosoft/mp4:twitStream_360/playlist.m3u8',
         'http://twit.am/listen'
         ]
     if content_type == 'audio':
