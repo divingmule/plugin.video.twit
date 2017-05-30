@@ -157,8 +157,9 @@ def display_shows(filter):
     for i in shows_data['shows']:
         if i['label'] == 'All TWiT.tv Shows':
             continue
-        fanart = ('https:%s' %i['coverArt']['derivatives']
-                ['twit_album_art_1400x1400'])
+        fanart = i['coverArt']['derivatives']['twit_album_art_1400x1400']
+        if not fanart.startswith('http'):
+            fanart = ('https:%s' %fanart)
         album_art[i['label']] = fanart
         info = {'plotoutline': i['tagLine'],
                 'plot': BeautifulSoup(i['description'], 'html.parser'
@@ -218,7 +219,9 @@ def get_episodes(episodes_url, iconimage):
             d_object = datetime(*(time.strptime(i['created'],
                                                 '%Y-%m-%dT%H:%M:%Sz')[0:6]))
         info['aired'] = datetime.strftime(d_object, '%Y/%m/%d')
-        episode_image = 'https:%s' %i['heroImage']['url']
+        episode_image = i['heroImage']['url']
+        if not episode_image.startswith('http'):
+            episode_image = 'https:%s' %episode_image
         add_dir(title, i['id'], episode_image, 'resolve_url', info, fanart)
     if episodes_data['_links'].has_key('next'):
         add_dir(language(30019),episodes_data['_links']['next']['href'],
