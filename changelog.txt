@@ -1,3 +1,6 @@
+Version 2.1.7
+Added norwegian translation
+
 Version 2.1.6
 fix for format changes in RSS feed
 fix Ustream live feed
