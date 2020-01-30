@@ -23,44 +23,44 @@ msgid "Available Streams"
 msgstr "Tilgjengelige strømmer"
 
 msgctxt "#30003"
-msgid "Bitgravity (hls high)"
-msgstr "Bitgravity (hls høy)"
+msgid "Mixer HLS stream"
+msgstr "Mixer HLS stream"
 
 msgctxt "#30004"
-msgid "Bitgravity (hls low)"
-msgstr "Bitgravity (hls lav)"
-
-msgctxt "#30005"
-msgid "Bitgravity (http 1 mbps)"
-msgstr "Bitgravity (http 1 mbps)"
-
-msgctxt "#30006"
-msgid "Bitgravity (http 400 kbps)"
-msgstr "Bitgravity (http 400 kbps)"
-
-msgctxt "#30007"
 msgid "Ustream (multibitrate hls)"
 msgstr "Ustream (multibitrate hls)"
+
+msgctxt "#30005"
+msgid "YouTube add-on"
+msgstr "YouTube add-on"
+
+msgctxt "#30006"
+msgid ""
+msgstr ""
+
+msgctxt "#30007"
+msgid ""
+msgstr ")"
 
 msgctxt "#30008"
 msgid "Search"
 msgstr "Søk"
 
 msgctxt "#30009"
-msgid "Flosoft.biz (multibitrate hls)"
-msgstr "Flosoft.biz (multibitrate hls)"
+msgid ""
+msgstr ""
 
 msgctxt "#30010"
-msgid "Flosoft.biz (hls 720x1280)"
-msgstr "Flosoft.biz (hls 720x1280)"
+msgid ""
+msgstr ""
 
 msgctxt "#30011"
-msgid "Flosoft.biz (hls 540x960)"
-msgstr "Flosoft.biz (hls 540x960)"
+msgid ""
+msgstr ""
 
 msgctxt "#30012"
-msgid "Flosoft.biz (hls 360x640)"
-msgstr "Flosoft.biz (hls 360x640)"
+msgid ""
+msgstr ""
 
 msgctxt "#30013"
 msgid "Audio TWiT.am/listen"

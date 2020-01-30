@@ -1,5 +1,11 @@
 Version 2.1.7
-Added norwegian translation
+Added Norwegian translation thanks to solbu
+Updated show listings
+Twit live
+	removed dead streams
+	added Mixer HLS stream
+	added play from Youtube add-on
+	*you may need to adjust your stream setting
 
 Version 2.1.6
 fix for format changes in RSS feed

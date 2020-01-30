@@ -71,35 +71,26 @@ def display_main():
 
 def get_rss_feed(url, show_name, iconimage):
     ''' parse the rss feed for the episode directory of a show '''
-    get_art = False
-    if show_name in ['Radio Leo', 'All TWiT.tv Shows']:
-        get_art = True
-        artworks = [{i['title']: i['art']} for i in shows.active_shows]
     show_data = [i for i in shows.active_shows if show_name == i['title']]
     if not show_data:
         show_data = [i for i in shows.retired_shows if
                 show_name == i['title']]
     feed = feedparser.parse(resolve_playback_type(show_data[0]['feeds']))
     for i in feed['entries']:
+        addon_log(i)
         title = i['title'].encode('utf-8')
-        if get_art:
-            try:
-                art = [x.values()[0] for x in artworks if
-                        x.keys()[0] in title][0]
-            except:
-                addon_log(format_exc())
-                art = iconimage
+        if i.has_key('media_thumbnail'):
+            art = i['media_thumbnail'][0]['url']
         else:
             art = iconimage
         info = {}
-        try:
-            info['duration'] = duration_to_seconds(i['itunes_duration'])
-            info['aired'] = time.strftime('%Y/%m/%d', i['published_parsed'])
-            soup = BeautifulSoup(i['content'][0]['value'], 'html.parser')
-            info['plot'] = soup.get_text().encode('utf-8')
-        except:
-            addon_log(format_exc())
-        stream_url = i['id'].encode('utf-8')
+        info['duration'] = duration_to_seconds(i['itunes_duration'])
+        info['aired'] = time.strftime('%Y/%m/%d', i['published_parsed'])
+        soup = BeautifulSoup(i['content'][0]['value'], 'html.parser')
+        info['plot'] = soup.get_text().encode('utf-8')
+        stream_url = i['id']
+        if not stream_url.startswith('http'):
+            stream_url = i['media_content'][0]['url']
         add_dir(title, stream_url, art, 'resolved_url', info, iconimage)
 
 
@@ -121,15 +112,15 @@ def duration_to_seconds(duration_string):
 
 def resolve_playback_type(media_urls):
     playback_options = {
-        '0': 'HD Video',
-        '1': 'SD Video Large',
-        '2': 'SD Video Small',
-        '3': 'Audio'
+        '0': 'Video-HD',
+        '1': 'Video-HI',
+        '2': 'Video-LO',
+        '3': 'MP3'
         }
     if (params.has_key('content_type') and
         params['content_type'] == 'audio'):
         playback_setting = '3'
-        playback_type = 'Audio'
+        playback_type = 'MP3'
     else:
         playback_setting = addon.getSetting('playback')
         playback_type = playback_options[playback_setting]
@@ -167,21 +158,20 @@ def download_file(stream_url, title):
     addon_log('################################')
 
 
+def get_youtube_live_id():
+    data = make_request('https://www.youtube.com/user/twit/live')
+    soup = BeautifulSoup(data, 'html.parser')
+    video_id = soup.find('meta', attrs={'itemprop': "videoId"})['content']
+    return video_id
+
+
 def twit_live():
     live_urls = [
-        ('http://twit.live-s.cdn.bitgravity.com/cdn-live-s1/_definst_/'
-         'twit/live/high/playlist.m3u8'),
-        ('http://twit.live-s.cdn.bitgravity.com/cdn-live-s1/_definst_/'
-         'twit/live/low/playlist.m3u8'),
-        'http://bglive-a.bitgravity.com/twit/live/high?noprefix',
-        'http://bglive-a.bitgravity.com/twit/live/low?noprefix',
+        'https://mixer.com/api/v1/channels/39385369/manifest.m3u8',
         ('http://iphone-streaming.ustream.tv/uhls/1524/streams/live/'
-        'iphone/playlist.m3u8'),
-        ('http://hls.twit.tv/flosoft/smil:twitStreamAll.smil/'
-         'playlist.m3u8'),
-        'http://hls.twit.tv/flosoft/mp4:twitStream_720/playlist.m3u8',
-        'http://hls.twit.tv/flosoft/mp4:twitStream_540/playlist.m3u8',
-        'http://hls.twit.tv/flosoft/mp4:twitStream_360/playlist.m3u8',
+            'iphone/playlist.m3u8'),
+        ('plugin://plugin.video.youtube/play/?video_id=%s'
+            %get_youtube_live_id()),
         'http://twit.am/listen'
         ]
     if content_type == 'audio':
