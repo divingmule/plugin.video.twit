@@ -41,7 +41,7 @@ def make_request(url):
         data = response.read()
         response.close()
         return data
-    except urllib2.URLError, e:
+    except urllib2.URLError as e:
         addon_log( 'We failed to open "%s".' %url)
         if hasattr(e, 'reason'):
             addon_log('We failed to reach a server.')
@@ -77,7 +77,6 @@ def get_rss_feed(url, show_name, iconimage):
                 show_name == i['title']]
     feed = feedparser.parse(resolve_playback_type(show_data[0]['feeds']))
     for i in feed['entries']:
-        addon_log(i)
         title = i['title'].encode('utf-8')
         if i.has_key('media_thumbnail'):
             art = i['media_thumbnail'][0]['url']
