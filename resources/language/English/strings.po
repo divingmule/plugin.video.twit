@@ -138,15 +138,15 @@ msgid "Fanart"
 msgstr ""
 
 msgctxt "#30032"
-msgid "Media Info"
+msgid "Info Wall"
 msgstr ""
 
 msgctxt "#30033"
-msgid "Media Info 2"
+msgid "Wide List"
 msgstr ""
 
 msgctxt "#30034"
-msgid "Media Info 3"
+msgid "Wall"
 msgstr ""
 
 msgctxt "#30035"
