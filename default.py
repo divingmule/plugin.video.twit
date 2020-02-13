@@ -77,7 +77,8 @@ def get_rss_feed(show_name, iconimage):
         title = i['title']
         art = None
         if artworks:
-            art_list = [list(x.values())[0] for x in artworks if list(x.keys())[0] in title]
+            art_list = [list(x.values())[0] for x in artworks if
+                        list(x.keys())[0] in title]
             if art_list:
                 art = art_list[0]
         if art is None:
