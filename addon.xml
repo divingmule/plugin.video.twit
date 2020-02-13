@@ -9,7 +9,7 @@
     <import addon="script.module.feedparser" version="5.2.1"/>
     <import addon="script.ircchat" version="1.0.1" optional="true"/>
     <import addon="script.module.simple.downloader" version="1.9.5"/>
-    <import addon="script.module.beautifulsoup4" version="4.3.2"/>
+    <import addon="script.module.beautifulsoup4" version="4.6.2"/>
   </requires>
   <extension point="xbmc.python.pluginsource" library="default.py">
     <provides>audio video</provides>
