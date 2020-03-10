@@ -139,16 +139,16 @@ msgid "Fanart"
 msgstr "Fanart"
 
 msgctxt "#30032"
-msgid "Info Wall"
-msgstr "Informasjonsvegg"
+msgid ""
+msgstr ""
 
 msgctxt "#30033"
-msgid "Wide List"
-msgstr "Bred liste"
+msgid ""
+msgstr ""
 
 msgctxt "#30034"
-msgid "Wall"
-msgstr "vegg"
+msgid ""
+msgstr ""
 
 msgctxt "#30035"
 msgid "Download"

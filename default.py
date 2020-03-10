@@ -1,7 +1,12 @@
 # This Python file uses the following encoding: utf-8
-from urllib import urlencode, unquote_plus
 import os
+import sys
 import time
+try:
+    from urllib import urlencode, unquote_plus
+except ImportError:
+    # for python3
+    from urllib.parse import urlencode, unquote_plus
 
 import feedparser
 import SimpleDownloader as Downloader
@@ -43,9 +48,9 @@ def make_request(url):
         addon_log(error)
 
 
-def display_shows(filter):
+def display_shows(_filter):
     """ parse shows and add plugin directories """
-    if filter == 'active':
+    if _filter == 'active':
         items = shows.active_shows
     else:
         items = shows.retired_shows
@@ -139,7 +144,7 @@ def download_file(stream_url, title):
     """ thanks/credit to TheCollective for SimpleDownloader module"""
     path = addon.getSetting('download')
     if path == "":
-        xbmc.executebuiltin("XBMC.Notification(%s,%s,10000,%s)"
+        xbmc.executebuiltin("xbmcgui.Dialog().notification(%s,%s,10000,%s)"
                             % (language(30038), language(30037), addon_icon))
         addon.openSettings()
         path = addon.getSetting('download')
@@ -191,7 +196,9 @@ def set_resolved_url(resolved_url):
     xbmcplugin.setResolvedUrl(int(sys.argv[1]), success, item)
 
 
-def add_dir(name, url, iconimage, dir_mode, info={}, fanart=None):
+def add_dir(name, url, iconimage, dir_mode, info=None, fanart=None):
+    if info is None:
+        info = {}
     item_params = {'name': name.encode('utf-8'), 'url': url, 'mode': dir_mode,
                    'iconimage': iconimage, 'content_type': content_type}
     plugin_url = '%s?%s' % (sys.argv[0], urlencode(item_params))
@@ -227,7 +234,7 @@ def run_ircchat():
     nickname = addon.getSetting('nickname')
     username = addon.getSetting('username')
     if not nickname or not username:
-        xbmc.executebuiltin('XBMC.Notification(%s, %s,10000,%s)' %
+        xbmc.executebuiltin('xbmcgui.Dialog().notification(%s, %s,10000,%s)' %
                             ('IrcChat', language(30024), addon_icon))
         addon.openSettings()
         nickname = addon.getSetting('nickname')
@@ -238,26 +245,7 @@ def run_ircchat():
     xbmc.executebuiltin(
         'RunScript(script.ircchat, run_irc=True&nickname=%s&username=%s'
         '&password=%s&host=irc.twit.tv&channel=twitlive)' %
-        (nickname, username, addon.getSetting('password'))
-    )
-
-
-def set_view_mode():
-    view_mode = addon.getSetting('view_mode')
-    if view_mode == '0':
-        return
-    view_modes = {
-        # '1': '50',  # View_50_List
-        # '2': '51',  # View_51_Poster
-        # '3': '52',  # View_52_IconWall
-        # '4': '53',  # View_53_Shift
-        '1': '54',  # View_54_InfoWall
-        '2': '55',  # View_55_WideList
-        '3': '500',  # View_500_Wall
-        # '8': '501',  # View_501_Banner
-        # '9': '502'  # View_502_FanArt
-    }
-    xbmc.executebuiltin('Container.SetViewMode(%s)' % view_modes[view_mode])
+        (nickname, username, addon.getSetting('password')))
 
 
 params = {i.split('=')[0]: i.split('=')[1] for
@@ -289,7 +277,6 @@ elif mode == 'retired_shows':
 elif mode == 'rss_feed':
     get_rss_feed(params['name'], params['iconimage'])
     xbmcplugin.setContent(int(sys.argv[1]), 'episodes')
-    set_view_mode()
     xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 elif mode == 'resolved_url':
