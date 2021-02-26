@@ -1,0 +1,58 @@
+# Kodi Media Center language file
+# Addon Name: TWiT
+# Addon id: plugin.video.twit
+# Addon Provider: divingmule
+
+msgid ""
+msgstr ""
+
+msgctxt "#30001"
+msgid "Settings"
+msgstr ""
+
+msgctxt "#30002"
+msgid "TWiT Live"
+msgstr ""
+
+msgctxt "#30003"
+msgid "Ustream (multibitrate hls)"
+msgstr ""
+
+msgctxt "#30004"
+msgid "YouTube add-on"
+
+msgctxt "#30005"
+msgstr "Logging"
+msgstr ""
+
+msgctxt "#30006"
+msgid "Debug logging"
+msgstr ""
+
+msgctxt "#30007"
+msgid "Addon Cache"
+msgstr ""
+
+msgctxt "#30008"
+msgid "Re-Cache Addon Data"
+msgstr ""
+
+msgctxt "#30009"
+msgid "Updates the list of shows. This data rarely changes."
+msgstr ""
+
+msgctxt "#30010"
+msgid "Retired Shows"
+msgstr ""
+
+msgctxt "#30011"
+msgid "TWiT"
+msgstr ""
+
+msgctxt "#30012"
+msgid "Caching add-on data"
+msgstr ""
+
+msgctxt "#30013"
+msgid "Caching was successful"
+msgstr ""

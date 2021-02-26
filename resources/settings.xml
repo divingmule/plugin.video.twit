@@ -1,14 +1,40 @@
-﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
-<settings>
-  <category label="General">
-    <setting id="playback" type="enum" lvalues="30015|30016|30017|30018" label="30014" default="1" />
-    <setting id="download" type="folder" source="files" label="30037"  option="writeable" default=""/>
-  </category>
-  <category label="30001">
-    <setting id="twit_live" label="30001" type="select" lvalues="30003|30004|30005" default="0" />
-    <setting id="run_chat" type="bool" label="30020" default="false" />
-    <setting id="nickname" type="text" label="30021" default="" />
-    <setting id="username" type="text" label="30022" default="" />
-    <setting id="password" type="text" label="30023" default="" option="hidden" />
-  </category>
+<?xml version="1.0" ?>
+<settings version="1">
+	<section id="plugin.video.twit">
+		<category id="general" label="30001" help="">
+			<group id="1" label="30002">
+				<setting id="twit_live" type="integer" label="30002" help="">
+					<level>0</level>
+					<default>0</default>
+					<constraints>
+						<options>
+							<option label="30003">0</option>
+							<option label="30004">1</option>
+						</options>
+					</constraints>
+					<control type="spinner" format="string">
+						<heading>30002</heading>
+					</control>
+				</setting>
+			</group>
+			<group id="2" label="30005">
+				<setting id="debug" type="boolean" label="30006" help="">
+					<level>0</level>
+					<default>false</default>
+					<control type="toggle"/>
+				</setting>
+			</group>
+		</category>
+		<category id="plugin_cache" label="30007" help="">
+			<group id="1" label="">
+				<setting id="cache_plugin" type="action" label="30008" help="30009">
+					<level>0</level>
+					<data>RunAddon(plugin.video.twit, cache_plugin)</data>
+					<control type="button" format="action">
+						<close>true</close>
+					</control>
+				</setting>
+			</group> 
+		</category>
+	</section>
 </settings>
