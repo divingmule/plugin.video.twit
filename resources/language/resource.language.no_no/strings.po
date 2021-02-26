@@ -1,0 +1,171 @@
+# XBMC Media Center language file
+msgid ""
+msgstr ""
+"Project-Id-Version: XBMC-Addons\n"
+"Report-Msgid-Bugs-To: alanwww1@xbmc.org\n"
+"POT-Creation-Date: 2021-02-26 01:38-0600\n"
+"PO-Revision-Date: 2021-02-26 15:30+0100\n"
+"Last-Translator: Johnny A. Solbu <johnny@solbu.net>\n"
+"Language-Team: Norwegian Bokmaal <l10n-no@lister.huftis.org>\n"
+"Language: nb\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 2.2.3\n"
+
+msgctxt "#30001"
+msgid "Settings"
+msgstr "Innstillinger"
+
+msgctxt "#30002"
+msgid "TWiT Live"
+msgstr "TWiT Live"
+
+msgctxt "#30003"
+msgid "Ustream (multibitrate hls)"
+msgstr "Ustream (multibitrate hls)"
+
+msgctxt "#30004"
+msgid "YouTube add-on"
+msgstr "YouTube-tillegg"
+
+msgctxt "#30005"
+msgid "Logging"
+msgstr "Logging"
+
+msgctxt "#30006"
+msgid "Debug logging"
+msgstr "Feilsøkingslogg"
+
+msgctxt "#30007"
+msgid "Addon Cache"
+msgstr "Tillegg-hurtigbuffer"
+
+msgctxt "#30008"
+msgid "Re-Cache Addon Data"
+msgstr "Lagre tilleggsdata på nytt"
+
+msgctxt "#30009"
+msgid "Updates the list of shows. This data rarely changes."
+msgstr "Oppdaterer listen over programmer. Disse dataene endres sjelden."
+
+msgctxt "#30010"
+msgid "Retired Shows"
+msgstr "Pensjonerte serier"
+
+msgctxt "#30011"
+msgid "TWiT"
+msgstr "TWiT"
+
+msgctxt "#30012"
+msgid "Caching add-on data"
+msgstr "Hurtigbufre tilleggsdata"
+
+msgctxt "#30013"
+msgid "Caching was successful"
+msgstr "Hurtigbufring var vellykket"
+
+#~ msgctxt "#30002"
+#~ msgid "Available Streams"
+#~ msgstr "Tilgjengelige strømmer"
+
+#~ msgctxt "#30003"
+#~ msgid "Mixer HLS stream"
+#~ msgstr "Mixer HLS stream"
+
+#~ msgctxt "#30007"
+#~ msgid ""
+#~ msgstr ")"
+
+#~ msgctxt "#30008"
+#~ msgid "Search"
+#~ msgstr "Søk"
+
+#~ msgctxt "#30013"
+#~ msgid "Audio TWiT.am/listen"
+#~ msgstr "Lyd TWiT.am/listen"
+
+#~ msgctxt "#30014"
+#~ msgid "Playback Type"
+#~ msgstr "Avspillingstype"
+
+#~ msgctxt "#30015"
+#~ msgid "Video (HD) 1280x720 Bitrate 2500"
+#~ msgstr "Video (HD) 1280x720 Bitrate 2500"
+
+#~ msgctxt "#30016"
+#~ msgid "Video (SD) 864x480 Bitrate 500"
+#~ msgstr "Video (SD) 864x480 Bitrate 500"
+
+#~ msgctxt "#30017"
+#~ msgid "Video (low/mobile) 640x368 Bitrate 256"
+#~ msgstr "Video (lav/mobil) 640x368 Bitrate 256"
+
+#~ msgctxt "#30018"
+#~ msgid "Audio"
+#~ msgstr "Lyd"
+
+#~ msgctxt "#30019"
+#~ msgid "Next Page"
+#~ msgstr "Neste side"
+
+#~ msgctxt "#30020"
+#~ msgid "Run IrcChat when TWiT Live is started"
+#~ msgstr "Kjør IrcChat når TWiT Live startes"
+
+#~ msgctxt "#30021"
+#~ msgid "Chat Nickname"
+#~ msgstr "Chat-kallenavn"
+
+#~ msgctxt "#30022"
+#~ msgid "Chat User Name"
+#~ msgstr "chat-brukernavn"
+
+#~ msgctxt "#30023"
+#~ msgid "Password"
+#~ msgstr "Passord"
+
+#~ msgctxt "#30024"
+#~ msgid "Nickname and User Name are required"
+#~ msgstr "Kallenavn og brukernavn er påkrevet"
+
+#~ msgctxt "#30025"
+#~ msgid "Set View Mode For Episodes"
+#~ msgstr "Visningsmodus for episoder"
+
+#~ msgctxt "#30026"
+#~ msgid "Default"
+#~ msgstr "Standard"
+
+#~ msgctxt "#30027"
+#~ msgid "List"
+#~ msgstr "Liste"
+
+#~ msgctxt "#30028"
+#~ msgid "Big List"
+#~ msgstr "Stor liste"
+
+#~ msgctxt "#30029"
+#~ msgid "Thumbnail"
+#~ msgstr "Miniatyrbilde"
+
+#~ msgctxt "#30030"
+#~ msgid "Poster Wrap"
+#~ msgstr "Plakatbryting"
+
+#~ msgctxt "#30031"
+#~ msgid "Fanart"
+#~ msgstr "Fanart"
+
+#~ msgctxt "#30035"
+#~ msgid "Download"
+#~ msgstr "Nedlasting"
+
+#~ msgctxt "#30037"
+#~ msgid "Download Location"
+#~ msgstr "Nedlastingssted"
+
+#~ msgctxt "#30038"
+#~ msgid "Select a location to download files."
+#~ msgstr "Velg et sted for å laste ned filer."
