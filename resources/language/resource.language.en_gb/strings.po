@@ -2,6 +2,8 @@
 # Addon Name: TWiT
 # Addon id: plugin.video.twit
 # Addon Provider: divingmule
+msgid ""
+msgstr ""
 "Project-Id-Version: XBMC-Addons\n"
 "Report-Msgid-Bugs-To: alanwww1@xbmc.org\n"
 "POT-Creation-Date: 2021-02-26 01:38-0600\n"
@@ -13,9 +15,6 @@
 "Content-Transfer-Encoding: 8bit\n"
 "Language: en\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-
-msgid ""
-msgstr ""
 
 msgctxt "#30001"
 msgid "Settings"
@@ -31,9 +30,10 @@ msgstr ""
 
 msgctxt "#30004"
 msgid "YouTube add-on"
+msgstr ""
 
 msgctxt "#30005"
-msgstr "Logging"
+msgid "Logging"
 msgstr ""
 
 msgctxt "#30006"
