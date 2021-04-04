@@ -1,7 +1,7 @@
 # This Python file uses the following encoding: utf-8
 import sys
 import time
-from urllib.parse import urlencode, unquote_plus
+from urllib.parse import urlencode, parse_qsl
 
 import feedparser
 from bs4 import BeautifulSoup
@@ -262,10 +262,7 @@ if 'cache_plugin' in sys.argv[2]:
     reset_shows_cache()
     exit()
 
-params = ()
-if '=' in sys.argv[2]:
-    params = {i.split('=')[0]: i.split('=')[1] for
-              i in unquote_plus(sys.argv[2])[1:].split('&')}
+params = {k: v for k,v in parse_qsl(sys.argv[2][1:])}
 
 if 'content_type' in params and params['content_type'] == 'audio':
     content_type = 'audio'
