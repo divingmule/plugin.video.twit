@@ -112,8 +112,12 @@ def twit_live():
     def get_youtube_live_id():
         data = make_request('https://www.youtube.com/user/twit/live')
         soup = BeautifulSoup(data, 'html.parser')
-        video_id = soup.find('meta', attrs={'itemprop': "videoId"})['content']
-        return video_id
+        id_tag = soup.find('meta', attrs={'itemprop': "videoId"})
+        if id_tag:
+            return id_tag['content']
+        else:
+            addon_log('Unable to parse video id')
+            return 'wLqtHTgZr_s'
     if content_type == 'audio':
         resolved_url = 'http://twit.am/listen'
     elif addon.getSetting('twit_live') == '0':
