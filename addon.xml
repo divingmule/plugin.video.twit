@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <addon id="plugin.video.twit"
              name="TWiT"
-             version="2.3.0"
+             version="2.3.1"
              provider-name="divingmule">
   <requires>
     <import addon="xbmc.python" version="3.0.0"/>
@@ -30,8 +30,9 @@
     <source>https://github.com/divingmule/plugin.video.twit</source>
     <forum>https://forum.kodi.tv/showthread.php?tid=183336</forum>
     <website>https://twit.tv/</website>
-    <news>v2.3.0 (02/25/2021)
+    <news>v2.3.1 (04/05/2021)
       [new] Updated for Kodi 19
+	  [fix] Bug fixes
     </news>
     <assets>
       <icon>icon.png</icon>
