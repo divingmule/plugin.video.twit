@@ -109,13 +109,41 @@ def duration_to_seconds(duration_string):
 
 def twit_live():
     """" resolve url for the live stream """
-    def get_youtube_live_id():
-        data = make_request('https://www.youtube.com/user/twit/live')
-        soup = BeautifulSoup(data, 'html.parser')
+    def consent_youtube_cookies(soup):
+        consent_url = 'https://consent.youtube.com/s'
+        form = soup.find('form', attrs={'action': consent_url})
+        if not form:
+            return None
+        inputs = form.find_all('input', attrs={'type': 'hidden'})
+        params = { i['name']: i['value'] for i in inputs}
+        try:
+            res = requests.post(consent_url, params)
+            if not res.status_code == requests.codes.ok:
+                addon_log('Bad status code: {}'.format(res.status_code))
+                res.raise_for_status()
+            if not res.encoding == 'utf-8':
+                res.encoding = 'utf-8'
+            return BeautifulSoup(res.text, 'html.parser')
+        except requests.exceptions.HTTPError as error:
+            addon_log('We failed to open {}.'.format(consent_url))
+            addon_log(error)
+        return None
+    def extract_video_id(soup):
         id_tag = soup.find('meta', attrs={'itemprop': "videoId"})
         if id_tag:
             return id_tag['content']
-        else:
+        return None
+    def get_youtube_live_id():
+        data = make_request('https://www.youtube.com/user/twit/live')
+        soup = BeautifulSoup(data, 'html.parser')
+        video_id = extract_video_id(soup)
+        if not video_id:
+            addon_log('Treating page as cookie consent page.')
+            soup = consent_youtube_cookies(soup)
+            if soup:
+                video_id = extract_video_id(soup)
+                if video_id:
+                    return video_id
             addon_log('Unable to parse video id')
             return 'wLqtHTgZr_s'
     if content_type == 'audio':
