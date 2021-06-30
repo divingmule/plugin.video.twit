@@ -2,6 +2,7 @@
 import os
 import sys
 import time
+
 try:
     from urllib import urlencode, unquote_plus
 except ImportError:
@@ -10,85 +11,53 @@ except ImportError:
 
 import feedparser
 import SimpleDownloader as Downloader
-from resources import shows
 from bs4 import BeautifulSoup
 import requests
 
 import xbmcplugin
 import xbmcgui
 import xbmcaddon
-
+from resources import addon_cache
 
 addon = xbmcaddon.Addon()
 addon_id = addon.getAddonInfo('id')
 addon_version = addon.getAddonInfo('version')
 addon_fanart = addon.getAddonInfo('fanart')
 addon_icon = addon.getAddonInfo('icon')
-addon_path = xbmc.translatePath(addon.getAddonInfo('path')
-                                ).encode('utf-8')
+addon_path = xbmc.translatePath(addon.getAddonInfo('path')).encode('utf-8')
 language = addon.getLocalizedString
 
 
 def addon_log(string):
-    xbmc.log("[%s-%s]: %s" % (addon_id, addon_version, string),
-             level=xbmc.LOGDEBUG)
+    xbmc.log("[%s-%s]: %s" % (addon_id, addon_version, string), level=debug_level)
 
 
-def make_request(url):
-    try:
-        res = requests.get(url)
-        if not res.status_code == requests.codes.ok:
-            addon_log('Bad status code: %s' % res.status_code)
-            res.raise_for_status()
-        if not res.encoding == 'utf-8':
-            res.encoding = 'utf-8'
-        return res.text
-    except requests.exceptions.HTTPError as error:
-        addon_log('We failed to open "%s".' % url)
-        addon_log(error)
-
-
-def display_shows(_filter):
+def display_shows(show_type):
     """ parse shows and add plugin directories """
-    if _filter == 'active':
-        items = shows.active_shows
-    else:
-        items = shows.retired_shows
-    for i in items:
-        add_dir(i['title'], i['url'], i['art'], 'rss_feed',
-                {'plot': i['desc']}, i['art'])
+    items = addon_cache.get_shows(show_type)
+    for i in items[show_type]:
+        if content_type == 'video':
+            feed_url = i['video_feed']
+        else:
+            feed_url = i['audio_feed']
+        add_dir(i['title'], feed_url, i['art'], 'rss_feed', {'plot': i['plot']}, i['art'])
 
 
 def display_main():
     """ display the main directory """
     live_icon = os.path.join(addon_path, 'resources', 'live.png')
-    add_dir(language(30001), 'twit_live', live_icon, 'twit_live')
+    add_dir(language(30002), 'twit_live', live_icon, 'twit_live')
     display_shows('active')
     add_dir(language(30036), 'retired_shows', addon_icon, 'retired_shows')
 
 
-def get_rss_feed(show_name, iconimage):
+def get_rss_feed(feed_url, iconimage):
     """ parse the rss feed for the episode directory of a show """
-    show_data = [i for i in shows.active_shows if show_name == i['title']]
-    if not show_data:
-        show_data = [i for i in shows.retired_shows if
-                     show_name == i['title']]
-    comp_shows = ('Radio Leo', 'All TWiT.tv Shows')
-    artworks = None
-    if show_name in comp_shows:
-        artworks = [{i['title']: i['art']} for i in shows.active_shows]
-    feed = feedparser.parse(resolve_playback_type(show_data[0]['feeds']))
+    feed = feedparser.parse(feed_url)
     for i in feed['entries']:
-        title = i['title']
         art = None
-        if artworks:
-            art_list = [list(x.values())[0] for x in artworks if
-                        list(x.keys())[0] in title]
-            if art_list:
-                art = art_list[0]
-        if art is None:
-            if 'media_thumbnail' in i:
-                art = i['media_thumbnail'][0]['url']
+        if 'media_thumbnail' in i:
+            art = i['media_thumbnail'][0]['url']
         if art is None:
             art = iconimage
         info = {'duration': duration_to_seconds(i['itunes_duration']),
@@ -98,10 +67,11 @@ def get_rss_feed(show_name, iconimage):
         stream_url = i['id']
         if not stream_url.startswith('http'):
             stream_url = i['media_content'][0]['url']
-        add_dir(title, stream_url, art, 'resolved_url', info, iconimage)
+        add_dir(i['title'], stream_url, art, 'resolved_url', info, iconimage)
 
 
 def duration_to_seconds(duration_string):
+    """ helper function for get_rss_feed, converts duration string to seconds"""
     seconds = None
     if duration_string and len(duration_string.split(':')) >= 2:
         d = duration_string.split(':')
@@ -117,34 +87,11 @@ def duration_to_seconds(duration_string):
     return seconds
 
 
-def resolve_playback_type(media_urls):
-    playback_options = {
-        '0': 'Video-HD',
-        '1': 'Video-HI',
-        '2': 'Video-LO',
-        '3': 'MP3'
-    }
-    if 'content_type' in params and params['content_type'] == 'audio':
-        playback_type = 'MP3'
-    else:
-        playback_setting = addon.getSetting('playback')
-        playback_type = playback_options[playback_setting]
-    resolved_url = None
-    if playback_type in media_urls:
-        resolved_url = media_urls[playback_type]
-    else:
-        dialog = xbmcgui.Dialog()
-        ret = dialog.select(language(30002), list(media_urls.keys()))
-        if ret >= 0:
-            resolved_url = list(media_urls.values())[ret]
-    return resolved_url
-
-
 def download_file(stream_url, title):
     """ thanks/credit to TheCollective for SimpleDownloader module"""
     path = addon.getSetting('download')
     if path == "":
-        xbmc.executebuiltin("xbmcgui.Dialog().notification(%s,%s,10000,%s)"
+        xbmc.executebuiltin("Notification(%s,%s,10000,%s)"
                             % (language(30038), language(30037), addon_icon))
         addon.openSettings()
         path = addon.getSetting('download')
@@ -163,26 +110,14 @@ def download_file(stream_url, title):
     addon_log('################################')
 
 
-def get_youtube_live_id():
-    data = make_request('https://www.youtube.com/user/twit/live')
-    soup = BeautifulSoup(data, 'html.parser')
-    video_id = soup.find('meta', attrs={'itemprop': "videoId"})['content']
-    return video_id
-
-
 def twit_live():
-    live_urls = (
-        'https://mixer.com/api/v1/channels/39385369/manifest.m3u8',
-        ('http://iphone-streaming.ustream.tv/uhls/1524/streams/live/'
-         'iphone/playlist.m3u8'),
-        ('plugin://plugin.video.youtube/play/?video_id=%s'
-         % get_youtube_live_id()),
-        'http://twit.am/listen')
-
+    """" resolve url for the live stream """
     if content_type == 'audio':
-        resolved_url = live_urls[-1]
+        resolved_url = 'http://twit.am/listen'
+    elif addon.getSetting('twit_live') == '0':
+        resolved_url = 'http://iphone-streaming.ustream.tv/uhls/1524/streams/live/iphone/playlist.m3u8'
     else:
-        resolved_url = live_urls[int(addon.getSetting('twit_live'))]
+        resolved_url = 'plugin://plugin.video.youtube/play/?video_id={}'.format(addon_cache.get_youtube_id())
     return resolved_url
 
 
@@ -202,22 +137,21 @@ def add_dir(name, url, iconimage, dir_mode, info=None, fanart=None):
     item_params = {'name': name.encode('utf-8'), 'url': url, 'mode': dir_mode,
                    'iconimage': iconimage, 'content_type': content_type}
     plugin_url = '%s?%s' % (sys.argv[0], urlencode(item_params))
-    listitem = xbmcgui.ListItem(name, iconImage=iconimage,
-                                thumbnailImage=iconimage)
-    if name == language(30001):
-        contextMenu = [('Run IrcChat',
-                        'RunPlugin(plugin://plugin.video.twit/?'
-                        'mode=ircchat&name=ircchat&url=live_chat)')]
-        listitem.addContextMenuItems(contextMenu)
+    listitem = xbmcgui.ListItem(name, iconImage=iconimage, thumbnailImage=iconimage)
+    if name == language(30002):
+        context_menu = [(language(30033),
+                         'RunPlugin(plugin://plugin.video.twit/?'
+                         'mode=ircchat&name=ircchat&url=live_chat)')]
+        listitem.addContextMenuItems(context_menu)
     isfolder = True
     if dir_mode in ['resolved_url', 'twit_live']:
         isfolder = False
         listitem.setProperty('IsPlayable', 'true')
     if dir_mode is 'resolved_url':
-        contextMenu = [(language(30035),
-                        'RunPlugin(plugin://plugin.video.twit/?'
-                        'mode=download&name=%s&url=%s)' % (name, url))]
-        listitem.addContextMenuItems(contextMenu)
+        context_menu = [(language(30035),
+                         'RunPlugin(plugin://plugin.video.twit/?'
+                         'mode=download&name=%s&url=%s)' % (name, url))]
+        listitem.addContextMenuItems(context_menu)
     if fanart is None:
         fanart = addon_fanart
     listitem.setProperty('Fanart_Image', fanart)
@@ -225,8 +159,7 @@ def add_dir(name, url, iconimage, dir_mode, info=None, fanart=None):
     if content_type == 'audio':
         info_type = 'music'
     listitem.setInfo(type=info_type, infoLabels=info)
-    xbmcplugin.addDirectoryItem(int(sys.argv[1]), plugin_url,
-                                listitem, isfolder)
+    xbmcplugin.addDirectoryItem(int(sys.argv[1]), plugin_url, listitem, isfolder)
 
 
 def run_ircchat():
@@ -234,7 +167,7 @@ def run_ircchat():
     nickname = addon.getSetting('nickname')
     username = addon.getSetting('username')
     if not nickname or not username:
-        xbmc.executebuiltin('xbmcgui.Dialog().notification(%s, %s,10000,%s)' %
+        xbmc.executebuiltin('Notification(%s, %s,10000,%s)' %
                             ('IrcChat', language(30024), addon_icon))
         addon.openSettings()
         nickname = addon.getSetting('nickname')
@@ -248,8 +181,19 @@ def run_ircchat():
         (nickname, username, addon.getSetting('password')))
 
 
-params = {i.split('=')[0]: i.split('=')[1] for
-          i in unquote_plus(sys.argv[2])[1:].split('&')}
+debug = addon.getSetting('debug')
+debug_level = xbmc.LOGDEBUG
+if debug == 'true':
+    addon_cache.cache.dbg = True
+    debug_level = xbmc.LOGNOTICE
+
+try:
+    params = {i.split('=')[0]: i.split('=')[1] for
+              i in unquote_plus(sys.argv[2])[1:].split('&')}
+except IndexError:
+    params = None
+
+addon_log(addon_cache.check_for_updates())
 
 if 'content_type' in params and params['content_type'] == 'audio':
     content_type = 'audio'
@@ -259,8 +203,7 @@ else:
 mode = None
 if 'mode' in params:
     mode = params['mode']
-    addon_log('Mode: %s, Name: %s, URL: %s' %
-              (params['mode'], params['name'], params['url']))
+    addon_log('Mode: {0}, Name: {1}, URL: {2}'.format(params['mode'], params['name'], params['url']))
 else:
     addon_log('Get root directory')
 
@@ -275,7 +218,7 @@ elif mode == 'retired_shows':
     xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 elif mode == 'rss_feed':
-    get_rss_feed(params['name'], params['iconimage'])
+    get_rss_feed(params['url'], params['iconimage'])
     xbmcplugin.setContent(int(sys.argv[1]), 'episodes')
     xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
