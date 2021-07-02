@@ -25,16 +25,5 @@
 				</setting>
 			</group>
 		</category>
-		<category id="plugin_cache" label="30007" help="">
-			<group id="1" label="">
-				<setting id="cache_plugin" type="action" label="30008" help="30009">
-					<level>0</level>
-					<data>RunAddon(plugin.video.twit, cache_plugin)</data>
-					<control type="button" format="action">
-						<close>true</close>
-					</control>
-				</setting>
-			</group> 
-		</category>
 	</section>
 </settings>

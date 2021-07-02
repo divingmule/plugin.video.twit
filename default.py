@@ -5,12 +5,11 @@ from urllib.parse import urlencode, parse_qsl
 
 import feedparser
 from bs4 import BeautifulSoup
-import requests
-import StorageServer
 
 import xbmcplugin
 import xbmcgui
 import xbmcaddon
+from resources.lib import addon_cache
 
 addon = xbmcaddon.Addon()
 addon_id = addon.getAddonInfo('id')
@@ -19,25 +18,10 @@ addon_fanart = addon.getAddonInfo('fanart')
 addon_icon = addon.getAddonInfo('icon')
 addon_path = addon.getAddonInfo('path')
 language = addon.getLocalizedString
-cache = StorageServer.StorageServer(addon_id, 24)
 
 
 def addon_log(string):
     xbmc.log("[{0}-{1}]: {2}".format(addon_id, addon_version, string), level=debug_level)
-
-
-def make_request(url):
-    try:
-        res = requests.get(url)
-        if not res.status_code == requests.codes.ok:
-            addon_log('Bad status code: {}'.format(res.status_code))
-            res.raise_for_status()
-        if not res.encoding == 'utf-8':
-            res.encoding = 'utf-8'
-        return res.text
-    except requests.exceptions.HTTPError as error:
-        addon_log('We failed to open {}.'.format(url))
-        addon_log(error)
 
 
 def display_main():
@@ -49,49 +33,36 @@ def display_main():
 
 def display_shows(show_type):
     """ parse shows and add plugin directories """
-    artwork = eval(cache.get('artwork'))
-    if show_type == 'active':
-        items = eval(cache.get('active'))
-    else:
-        items = eval(cache.get('retired'))
-    for i in items:
-        name = i['title']
-        if name in artwork:
-            art = artwork[name]
+    items = addon_cache.get_shows(show_type)
+    for i in items[show_type]:
+        if content_type == 'video':
+            feed_url = i['video_feed']
         else:
-            addon_log(f'No artwork found for {name}')
-            art = i['art']
-        add_dir(name, i['url'], art, 'rss_feed', {'plot': i['desc']}, art)
+            feed_url = i['audio_feed']
+        add_dir(i['title'], feed_url, i['art'], 'rss_feed', {'plot': i['plot']}, i['art'])
 
 
-def get_rss_feed(show_name, icon):
-    """ parse the rss feed for episodes of a show """
-    show_data = [i for i in eval(cache.get('active')) if show_name == i['title']]
-    if not show_data:
-        show_data = [i for i in eval(cache.get('retired')) if show_name == i['title']]
-    feeds = show_data[0]['feeds']
-    if len(feeds) == 1:
-        feed_url = feeds[0]
-    elif params['content_type'] == 'audio':
-        feed_url = feeds[0]
-    else:
-        feed_url = feeds[1]
+def get_rss_feed(feed_url, iconimage):
+    """ parse the rss feed for the episode directory of a show """
     feed = feedparser.parse(feed_url)
     for i in feed['entries']:
-        title = i['title']
-        art = icon
+        art = None
         if 'media_thumbnail' in i:
             art = i['media_thumbnail'][0]['url']
+        if art is None:
+            art = iconimage
         info = {'duration': duration_to_seconds(i['itunes_duration']),
                 'aired': time.strftime('%Y/%m/%d', i['published_parsed'])}
         soup = BeautifulSoup(i['content'][0]['value'], 'html.parser')
         info['plot'] = soup.get_text()
-        stream_url = i['media_content'][0]['url']
-        add_dir(title, stream_url, art, 'resolved_url', info, icon)
+        stream_url = i['id']
+        if not stream_url.startswith('http'):
+            stream_url = i['media_content'][0]['url']
+        add_dir(i['title'], stream_url, art, 'resolved_url', info, iconimage)
 
 
 def duration_to_seconds(duration_string):
-    """ helper function for get_rss_feed """
+    """ helper function for get_rss_feed, converts duration string to seconds"""
     seconds = None
     if duration_string and len(duration_string.split(':')) >= 2:
         d = duration_string.split(':')
@@ -109,49 +80,12 @@ def duration_to_seconds(duration_string):
 
 def twit_live():
     """" resolve url for the live stream """
-    def consent_youtube_cookies(soup):
-        consent_url = 'https://consent.youtube.com/s'
-        form = soup.find('form', attrs={'action': consent_url})
-        if not form:
-            return None
-        inputs = form.find_all('input', attrs={'type': 'hidden'})
-        params = { i['name']: i['value'] for i in inputs}
-        try:
-            res = requests.post(consent_url, params)
-            if not res.status_code == requests.codes.ok:
-                addon_log('Bad status code: {}'.format(res.status_code))
-                res.raise_for_status()
-            if not res.encoding == 'utf-8':
-                res.encoding = 'utf-8'
-            return BeautifulSoup(res.text, 'html.parser')
-        except requests.exceptions.HTTPError as error:
-            addon_log('We failed to open {}.'.format(consent_url))
-            addon_log(error)
-        return None
-    def extract_video_id(soup):
-        id_tag = soup.find('meta', attrs={'itemprop': "videoId"})
-        if id_tag:
-            return id_tag['content']
-        return None
-    def get_youtube_live_id():
-        data = make_request('https://www.youtube.com/user/twit/live')
-        soup = BeautifulSoup(data, 'html.parser')
-        video_id = extract_video_id(soup)
-        if not video_id:
-            addon_log('Treating page as cookie consent page.')
-            soup = consent_youtube_cookies(soup)
-            if soup:
-                video_id = extract_video_id(soup)
-                if video_id:
-                    return video_id
-            addon_log('Unable to parse video id')
-            return 'wLqtHTgZr_s'
     if content_type == 'audio':
         resolved_url = 'http://twit.am/listen'
     elif addon.getSetting('twit_live') == '0':
         resolved_url = 'http://iphone-streaming.ustream.tv/uhls/1524/streams/live/iphone/playlist.m3u8'
     else:
-        resolved_url = 'plugin://plugin.video.youtube/play/?video_id={}'.format(get_youtube_live_id())
+        resolved_url = 'plugin://plugin.video.youtube/play/?video_id={}'.format(addon_cache.get_youtube_id())
     return resolved_url
 
 
@@ -188,113 +122,14 @@ def add_dir(name, url, icon, dir_mode, info=None, fanart=None):
     xbmcplugin.addDirectoryItem(int(sys.argv[1]), plugin_url, listitem, is_folder)
 
 
-def set_shows_cache():
-    """ cache shows, this data rarely changes """
-    xbmcgui.Dialog().notification(language(30011), language(30012), addon_icon)
-    # scrape artwork urls
-    artwork = dict()
-    url = 'https://wiki.twit.tv/wiki/Cover_Art'
-    soup = BeautifulSoup(make_request(url), 'html.parser')
-    tags = soup.find_all('h3')
-    for i in tags:
-        if i('span', class_="mw-headline"):
-            name = i.get_text()
-            art_url = i.find_next('li').a['href']
-            artwork[name] = art_url
-    cache.set('artwork', repr(artwork))
-    # scrape shows
-    retired_shows = list()
-    active_shows = list()
-    retired_list = get_show_list('https://twit.tv/shows?shows_active=0')
-    active_list = get_show_list('https://twit.tv/shows?shows_active=1')
-    for name, url in retired_list:
-        show = get_show(name, url)
-        retired_shows.append(show)
-    cache.set('retired', repr(retired_shows))
-    for name, url in active_list:
-        show = get_show(name, url)
-        active_shows.append(show)
-    cache.set('active', repr(active_shows))
-    xbmcgui.Dialog().notification(language(30011), language(30013), addon_icon)
-    return True
-
-
-def get_show_list(shows_url):
-    """ helper function for set_shows_cache """
-    data = make_request(shows_url)
-    soup = BeautifulSoup(data, 'html.parser')
-    shows_tag = soup.find_all('div', class_="item media-object")
-    shows_list = list()
-    for show in shows_tag:
-        show_name = show.h2.a.get_text()
-        show_url = f"https://twit.tv{show.a['href']}"
-        shows_list.append((show_name, show_url))
-    return shows_list
-
-
-def get_show(show_name, show_url):
-    """ helper function for set_shows_cache """
-    show_data = BeautifulSoup(make_request(show_url), 'html.parser')
-    show = show_data.find('div', class_='wrapper media')
-    feeds = list()
-    for i in show_data.find_all('option', text='RSS'):
-        feeds.append(i['value'])
-    show_dict = {'art': show.img['data-borealis-srcs'].split(' ')[-1],
-                 'desc': show.p.get_text(),
-                 'feeds': feeds,
-                 'title': show_name,
-                 'url': show_url}
-    return show_dict
-
-
-def reset_shows_cache():
-    # in case something breaks the scraper
-    cache.set('cached', 'in_progress')
-    cache.set('artwork_bak', cache.get('artwork'))
-    cache.set('active_bak', cache.get('active'))
-    cache.set('retired_bak', cache.get('retired'))
-    # scrape, cache show data
-    success = set_shows_cache()
-    addon_log(f'Addon cache updated: {success}')
-    cache.set('cached', 'True')
-    cache.delete('%_bak')
-    return 'True'
-
-
-def check_cache():
-    # check if shows have been cached
-    cached = cache.get('cached')
-    if cached == 'True':
-        return
-    elif cached == 'in_progress':
-        # reset_shows_cache failed and needs to be restored
-        cache.set('artwork', cache.get('artwork_bak'))
-        cache.set('active', cache.get('active_bak'))
-        cache.set('retired', cache.get('retired_bak'))
-        cache.delete('%_bak')
-        return
-    else:
-        # shows data needs to be cached
-        addon_log('Caching add-on data')
-        set_cache = set_shows_cache()
-        addon_log(f'Add-on data cached: {set_cache}')
-        if set_cache:
-            cache.set('cached', 'True')
-
-
 debug = addon.getSetting('debug')
 debug_level = xbmc.LOGDEBUG
 if debug == 'true':
-    cache.dbg = True
     debug_level = xbmc.LOGINFO
 
-if 'cache_plugin' in sys.argv[2]:
-    # cache_plugin was called from settings
-    addon_log('Resetting shows cache')
-    reset_shows_cache()
-    exit()
+params = {k: v for k, v in parse_qsl(sys.argv[2][1:])}
 
-params = {k: v for k,v in parse_qsl(sys.argv[2][1:])}
+addon_log(addon_cache.check_for_updates())
 
 if 'content_type' in params and params['content_type'] == 'audio':
     content_type = 'audio'
@@ -307,7 +142,6 @@ if 'mode' in params:
     addon_log('Mode: {0}, Name: {1}, URL: {2}'.format(params['mode'], params['name'], params['url']))
 
 if mode is None:
-    check_cache()
     addon_log('Display main plugin directory')
     display_main()
     xbmcplugin.setContent(int(sys.argv[1]), 'tvshows')
@@ -319,7 +153,7 @@ elif mode == 'retired_shows':
     xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 elif mode == 'rss_feed':
-    get_rss_feed(params['name'], params['icon'])
+    get_rss_feed(params['url'], params['icon'])
     xbmcplugin.setContent(int(sys.argv[1]), 'episodes')
     xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
