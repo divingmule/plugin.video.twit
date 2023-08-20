@@ -1,6 +1,7 @@
 # This Python file uses the following encoding: utf-8
 import sys
 import time
+import re
 from urllib.parse import urlencode, parse_qsl
 
 import feedparser
@@ -109,6 +110,7 @@ def duration_to_seconds(duration_string):
 
 def twit_live():
     """" resolve url for the live stream """
+    
     def consent_youtube_cookies(soup):
         consent_url = 'https://consent.youtube.com/s'
         form = soup.find('form', attrs={'action': consent_url})
@@ -128,11 +130,18 @@ def twit_live():
             addon_log('We failed to open {}.'.format(consent_url))
             addon_log(error)
         return None
+    
     def extract_video_id(soup):
-        id_tag = soup.find('meta', attrs={'itemprop': "videoId"})
+        id_tag = soup.find('meta', attrs={'itemprop': 'videoId'})
         if id_tag:
             return id_tag['content']
+        id_tag = soup.find('meta', attrs={'property': 'og:url'})
+        if id_tag:
+            m = re.match(r'https://www\.youtube\.com/watch?v=(\w+)', id_tag['content'])
+            if m:
+                return m.group(1)
         return None
+    
     def get_youtube_live_id():
         data = make_request('https://www.youtube.com/user/twit/live')
         soup = BeautifulSoup(data, 'html.parser')
@@ -145,7 +154,8 @@ def twit_live():
                 if video_id:
                     return video_id
             addon_log('Unable to parse video id')
-            return 'wLqtHTgZr_s'
+            return 'WYzDdIG0Wjc'
+        
     if content_type == 'audio':
         resolved_url = 'http://twit.am/listen'
     elif addon.getSetting('twit_live') == '0':
