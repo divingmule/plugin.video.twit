@@ -112,49 +112,57 @@ def twit_live():
     """" resolve url for the live stream """
     
     def consent_youtube_cookies(soup):
-        consent_url = 'https://consent.youtube.com/s'
+        consent_url = 'https://consent.youtube.com/save'
         form = soup.find('form', attrs={'action': consent_url})
         if not form:
+            addon_log('Unable to find consent form tag!')
             return None
         inputs = form.find_all('input', attrs={'type': 'hidden'})
         params = { i['name']: i['value'] for i in inputs}
         try:
             res = requests.post(consent_url, params)
             if not res.status_code == requests.codes.ok:
-                addon_log('Bad status code: {}'.format(res.status_code))
+                addon_log(f"Bad status code from consent url: {res.status_code}")
                 res.raise_for_status()
             if not res.encoding == 'utf-8':
                 res.encoding = 'utf-8'
             return BeautifulSoup(res.text, 'html.parser')
         except requests.exceptions.HTTPError as error:
-            addon_log('We failed to open {}.'.format(consent_url))
+            addon_log(f"Failed to open consent url {consent_url}")
             addon_log(error)
         return None
-    
+
+    from pathlib import Path
     def extract_video_id(soup):
         id_tag = soup.find('meta', attrs={'itemprop': 'videoId'})
+        #addon_log(f"meta-itemprop tag {id_tag}")
         if id_tag:
             return id_tag['content']
         id_tag = soup.find('meta', attrs={'property': 'og:url'})
+        #addon_log(f"meta-property tag {id_tag}")
         if id_tag:
-            m = re.match(r'https://www\.youtube\.com/watch?v=(\w+)', id_tag['content'])
+            m = re.match(r'https://www\.youtube\.com/watch\?v=(.*)', id_tag['content'])
             if m:
                 return m.group(1)
+            else:
+                addon_log(f"Unable to parse og-url {id_tag['content']}")
         return None
     
     def get_youtube_live_id():
         data = make_request('https://www.youtube.com/user/twit/live')
         soup = BeautifulSoup(data, 'html.parser')
+        #Path('/tmp/yt1.out.html').write_text(soup.prettify())
         video_id = extract_video_id(soup)
         if not video_id:
-            addon_log('Treating page as cookie consent page.')
+            addon_log('Treating Youtube result page as cookie consent page.')
             soup = consent_youtube_cookies(soup)
             if soup:
+                #Path('/tmp/yt2.out.html').write_text(soup.prettify())
                 video_id = extract_video_id(soup)
                 if video_id:
                     return video_id
-            addon_log('Unable to parse video id')
-            return 'WYzDdIG0Wjc'
+            addon_log('Unable to parse video id, trying default')
+            return '1YZmMY8w1lM'
         
     if content_type == 'audio':
         resolved_url = 'http://twit.am/listen'
